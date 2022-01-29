@@ -19,6 +19,9 @@ import com.bookstore.entity.Book;
 import com.bookstore.entity.BookOrder;
 import com.bookstore.entity.Customer;
 import com.bookstore.entity.OrderDetail;
+import com.paypal.api.payments.ItemList;
+import com.paypal.api.payments.Payment;
+import com.paypal.api.payments.ShippingAddress;
 
 public class OrderServices {
 	
@@ -67,6 +70,20 @@ public class OrderServices {
 
 
 	public void showCheckoutForm() throws ServletException, IOException {
+		
+		HttpSession session =request.getSession();
+		ShoppingCart shoppingCart = (ShoppingCart) session.getAttribute("cart");
+		
+		float tax=shoppingCart.getTotalAmount()*0.8f;
+		float shippingFee=shoppingCart.getTotalQuantity()*1.0f;
+		float total=shoppingCart.getTotalAmount() + tax + shippingFee ;
+		
+		session.setAttribute("tax", tax);
+		session.setAttribute("fee", shippingFee);
+		session.setAttribute("total",total);
+		
+		CommonUtility.generateCountryList(request);
+		
 		String checkoutPage="frontend/checkout.jsp";
 		RequestDispatcher rd=request.getRequestDispatcher(checkoutPage);
 		rd.forward(request, response);	
@@ -76,18 +93,85 @@ public class OrderServices {
 
 	public void placeOrder() throws ServletException, IOException {
 		
-		String recipientName= request.getParameter("recipientName");
-		String recipientPhone= request.getParameter("recipientPhone");
-		String address= request.getParameter("address");
+		String paymentMethod= request.getParameter("paymentMethod");
+		BookOrder order=readOrderInfo();
+		
+		if(paymentMethod.equals("paypall")) {
+			PaymentServices paymentServices= new PaymentServices (request,response);
+			request.getSession().setAttribute("order4Paypal", order);
+			paymentServices.authorizePayment(order);
+			
+		}else {
+			
+			placeOrderCOD(order);
+		}
+		
+	}
+	
+	public Integer placeOrderPaypal(Payment payment) {
+		
+		BookOrder order= (BookOrder) request.getSession().getAttribute("order4Paypal");
+		ItemList itemList = payment.getTransactions().get(0).getItemList();
+		ShippingAddress shipAdres=itemList.getShippingAddress();
+		String shipPhone=itemList.getShippingPhoneNumber();
+		
+		String recipientName=shipAdres.getRecipientName();
+		String[] names=recipientName.split(" ");
+		
+		order.setRecipientName(names[0]);
+		order.setRecipientLastname(names[1]);
+		order.setAddressLine1(shipAdres.getLine1());
+		order.setAddressLine2(shipAdres.getLine2());
+		order.setCity(shipAdres.getCity());
+		order.setCountry(shipAdres.getCountryCode());
+		order.setRecipientPhone(shipPhone);
+		
+		return saveOrder(order);
+		
+	}
+	private void placeOrderCOD(BookOrder order) throws ServletException, IOException {
+		
+		saveOrder(order);
+		
+		String message="Thank you.Your order has been received."+"We will deliver your books within a few days.";
+		request.setAttribute("message", message);
+		String messagePage="frontend/message.jsp";
+		RequestDispatcher rd=request.getRequestDispatcher(messagePage);
+		rd.forward(request, response);	
+		
+	}
+	
+	private Integer saveOrder(BookOrder order) {
+		
+		BookOrder savedOrder = orderDAO.create(order);
+		
+		ShoppingCart shoppingCart = (ShoppingCart) request.getSession().getAttribute("cart");
+		shoppingCart.clear();
+		
+		return savedOrder.getOrderId();
+	}
+	
+	private BookOrder readOrderInfo() {
+		
+		
+		String paymentMethod= request.getParameter("paymentMethod");
+		String firstname= request.getParameter("firstname");
+		String lastname= request.getParameter("lastname");
+		String recipientPhone= request.getParameter("phone");
+		String address1= request.getParameter("addressLine1");
+		String address2= request.getParameter("addressLine2");
 		String city= request.getParameter("city");
 		String country= request.getParameter("country");
-		String paymentMethod= request.getParameter("paymentMethod");
-		String shippingAddress= address + "," + city + "," + country;
+		
 		
 		BookOrder order= new BookOrder();
-		order.setRecipientName(recipientName);
+		order.setRecipientName(firstname);
+		order.setRecipientLastname(lastname);
 		order.setRecipientPhone(recipientPhone);
-		order.setAddressLine1(shippingAddress);
+		order.setAddressLine1(address1);
+		order.setAddressLine2(address2);
+		order.setCity(city);
+		order.setCountry(country);
 		order.setPaymentMethod(paymentMethod);
 		
 		HttpSession session =request.getSession();
@@ -117,16 +201,19 @@ public class OrderServices {
 		}
 		
 		order.setOrderDetails(orderDetails);
-		order.setOrderTotal(shoppingCart.getTotalAmount());
 		
-		orderDAO.create(order);
+		float tax= (float) session.getAttribute("tax");
+		float fee= (float) session.getAttribute("fee");
+		float total= (float) session.getAttribute("total");
 		
-		String message="Thank you.Your order has been received."+"We will deliver your books within a few days.";
-		request.setAttribute("message", message);
-		String messagePage="frontend/message.jsp";
-		RequestDispatcher rd=request.getRequestDispatcher(messagePage);
-		rd.forward(request, response);	
+		order.setSubtotal(shoppingCart.getTotalAmount());
+		order.setTax(tax);
+		order.setShippingFee(fee);
+		order.setOrderTotal(total);
+		
+		return order;
 	}
+
 	public void listOrderByCustomer() throws ServletException, IOException {
 		HttpSession session=request.getSession();
 		Customer customer = (Customer) session.getAttribute("loggedCustomer");
@@ -243,6 +330,8 @@ public class OrderServices {
 		listAllOrder(messsage);
  		
 	}
+
+
 
 
 }

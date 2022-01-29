@@ -76,8 +76,16 @@
 								
 					<tr>
 					<td align="right">Country:</td>
-					<td align="left"><input type="text" id="country" required="required" 
-						name="country" size="20"  /></td>
+					<td align="left">
+					
+					<select name="country" id="country" >
+						<c:forEach items= "${mapCountries}" var="country">
+						<option value="${country.value}"> <c:if test="${customer.country} eq ${country.value}">selected="selected" </c:if>${country.key} </option>
+						 </c:forEach>
+					</select>
+					
+				
+
 					</tr>		
 				<tr>
 					<td>&nbsp;</td>

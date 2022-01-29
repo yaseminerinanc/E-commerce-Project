@@ -65,48 +65,78 @@
 					</c:forEach>
 
 					<tr>
-						<td></td>
-						<td></td>
-						<td></td>
-						<td>${cart.totalQuantity}book(s)</td>
-						<td>Total:</td>
-						<td colspan="2"><fmt:formatNumber value="${cart.totalAmount}"
-								type="currency" /></td>
+						<td colspan="7" align="right">
+							<p>Number of copies: ${cart.totalQuantity}</p>
+							<p>
+								Sub Total:
+								<fmt:formatNumber value="${cart.totalAmount}" type="currency" />
+							</p>
+							<p>
+								Tax :
+								<fmt:formatNumber value="${tax}" type="currency" />
+							</p>
+							<p>
+								Shipping Fee:
+								<fmt:formatNumber value="${fee}" type="currency" />
+							</p>
+							<p>
+								TOTAL :
+								<fmt:formatNumber value="${total}" type="currency" />
+							</p>
+						</td>
 					</tr>
 
 				</table>
-				<h2>Your Shipping Information</h2>
+				<h2>Recipient Information</h2>
 				<form id="orderForm" action="placeorder" method="post">
 					<table>
 
 						<tr>
-							<td>Recipient Name:</td>
-							<td><input type="text" name="recipientName" required="required"
-								value="${loggedCustomer.fullname}"></td>
+							<td>First Name:</td>
+							<td><input type="text" name="firstname" required="required"
+								value="${loggedCustomer.firstname}"></td>
 						</tr>
 
 						<tr>
-							<td>Recipient Phone:</td>
-							<td><input type="text" name="recipientPhone" required="required"
+							<td>Last Name:</td>
+							<td><input type="text" name="lastname" required="required"
+								value="${loggedCustomer.lastname}"></td>
+						</tr>
+
+						<tr>
+							<td>Phone:</td>
+							<td><input type="text" name="phone" required="required"
 								value="${loggedCustomer.phone}"></td>
 						</tr>
 
 						<tr>
-							<td>Recipient Address:</td>
-							<td><input type="text" name="address" required="required"
-								value="${loggedCustomer.address}"></td>
+							<td>Address Line 1:</td>
+							<td><input type="text" name="addressLine1" 
+								required="required" value="${loggedCustomer.addressLine1}"></td>
 						</tr>
 
 						<tr>
-							<td>Recipient City:</td>
+							<td>Address Line 2:</td>
+							<td><input type="text" name="addressLine2"
+								required="required" value="${loggedCustomer.addressLine2}"></td>
+						</tr>
+
+						<tr>
+							<td>City:</td>
 							<td><input type="text" name="city" required="required"
 								value="${loggedCustomer.city}"></td>
 						</tr>
 
 						<tr>
-							<td>Recipient Country:</td>
-							<td><input type="text" name="country" required="required"	
-								value="${loggedCustomer.country}"></td>
+							<td>Country:</td>
+							<td><select name="country" id="country">
+									<c:forEach items="${mapCountries}" var="country">
+										<option value="${country.value}">
+											<c:if test="${loggedCustomer.country} eq ${country.value}">selected="selected" </c:if>${country.key}
+										</option>
+									</c:forEach>
+							</select>
+							</td>
 						</tr>
 					</table>
 
@@ -115,16 +145,18 @@
 						Choose your payment method: &nbsp;&nbsp;&nbsp; 
 						<select name="paymentMethod">
 							<option value="Cash On Delivery">Cash On Delivery</option>
+							<option value="paypal">PayPal or Credit Card</option>
 						</select>
 					</div>
-					
+
 					&nbsp;
 					<div>
 						<table>
 							<tr>
 								<td><button type="submit">Place Order</button></td>
-								<td><a href="${pageContext.request.contextPath}/"><b>Continue Shopping</b></a></td>
-								
+								<td><a href="${pageContext.request.contextPath}/"><b>Continue
+											Shopping</b></a></td>
+
 							</tr>
 						</table>
 					</div>

@@ -83,7 +83,7 @@
 			
 			<tr>
 				<td>Phone:</td>
-				<td><input type="text" name="recipientPhone" id ="recipientPhone" value="${order.recipientPhone}" size="45" required= "required"></input></td>
+				<td><input type="number" name="recipientPhone" id ="recipientPhone" value="${order.recipientPhone}" size="15" required= "required"></input></td>
 			</tr>
 			
 			<tr>
@@ -150,11 +150,13 @@
 			</c:forEach>
 
 			<tr>
-				<td colspan="4" align="right">
-				<p></p>
-				<b><i>TOTAL:</i></b></td>
-				<td><b><fmt:formatNumber value="${order.orderTotal}" type="currency" /></b></td>
-				<td></td>
+				<td colspan="7" align="right">
+					<p>Sub Total: <fmt:formatNumber value="${order.subtotal}" type= "currency" /></p>
+					<p>Tax: <input type="number" size="5" name="tax" id="tax"  value="${order.tax}" required= "required" min=0/></p>
+					<p>Shipping Fee: <input type="number" size="5" name="fee" id="fee" value="${order.shippingFee}" required= "required" min=0 /></p>
+					<p>TOTAL:<fmt:formatNumber name="total" id= "total" value="${order.orderTotal}" type="currency" /></p>
+				</td>	
+				
 			</tr>
 
 		</table>
